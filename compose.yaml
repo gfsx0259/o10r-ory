@@ -41,7 +41,7 @@ services:
       - MYSQL_DATABASE=kratos
       - MYSQL_ROOT_PASSWORD=secret
     ports:
-      - "3316:3306"
+      - "3306"
     networks:
       - dev-ecommpay-pp-network
   kratos-ui:
