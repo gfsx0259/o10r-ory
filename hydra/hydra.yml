@@ -1,0 +1,14 @@
+serve:
+  cookies:
+    same_site_mode: Lax
+
+urls:
+  self:
+    issuer: https://hydra.o10r.io
+    admin: http://hydra:4445
+  login:  https://ory.o10r.io/login
+  consent: https://hydra-consent.o10r.io/consent
+
+secrets:
+  system:
+    - 9a134094e813d7f83bf4a09c2d259aa8ed24b0a0f2c2d1ab8e4e9cca34dc48af

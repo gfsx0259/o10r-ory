@@ -1,0 +1,16 @@
+  {
+    "client_id": "dashboard",
+    "client_secret": "dashboard",
+    "client_name": "Dashboard app",
+    "grant_types": [
+      "client_credentials",
+      "authorization_code"
+    ],
+    "scope": "openid project.read project.write",
+    "redirect_uris": [
+      "https://dashboard.o10r.io/token"
+    ],
+    "response_types": [
+      "code"
+    ]
+  }

@@ -1,0 +1,117 @@
+serve:
+  public:
+    base_url: https://ory.o10r.io:4433
+    cors:
+      enabled: true
+      allowed_origins:
+        - https://ory.o10r.io         # разрешаем UI‑домен
+        - https://dashboard.o10r.io        # разрешаем app‑домен
+        - https://welcome.o10r.io        # разрешаем app‑домен
+      allowed_methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allowed_headers:
+        - Authorization
+        - Cookie
+        - Content-Type
+        - X-CSRF-Token
+      exposed_headers:
+        - Content-Type
+        - Set-Cookie
+      allow_credentials: true
+  admin:
+    base_url: http://localhost:4434
+
+selfservice:
+  default_browser_return_url: https://welcome.o10r.io
+  allowed_return_urls:
+    - https://welcome.o10r.io
+  methods:
+    password:
+      enabled: true
+    oidc:
+      enabled: true
+      config:
+        providers:
+          - id: google                # свой внутренний идентификатор провайдера
+            provider: google          # короткое имя, встроенная поддержка Google
+            client_id: 10955421801-rejf5khr8on7q81q4u4n3mtnliohrptk.apps.googleusercontent.com
+            client_secret: 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
+            mapper_url: file:///etc/config/oidc_mapper.jsonnet
+            scope:
+              - email
+
+  flows:
+    login:
+      ui_url: https://ory.o10r.io/login
+      lifespan: 10m
+    registration:
+      ui_url: https://ory.o10r.io/registration
+      lifespan: 10m
+      after:
+        password:
+          hooks:
+            - hook: web_hook
+              config:
+                url: http://project/project
+                method: POST
+                body: file:///etc/config/webhook.jsonnet
+        oidc:
+          hooks:
+            - hook: session
+            - hook: web_hook
+              config:
+                url: http://project/project
+                method: POST
+                body: file:///etc/config/webhook.jsonnet
+    settings:
+      ui_url: https://ory.o10r.io/settings
+    recovery:
+      enabled: false
+      ui_url: https://ory.o10r.io/recovery
+    verification:
+      enabled: false # TODO YOU SHOULD IMPLEMENT IT
+      ui_url: https://ory.o10r.io/verify
+    logout:
+      after:
+        default_browser_return_url: https://ory.o10r.io/login
+
+identity:
+  default_schema_id: default
+  schemas:
+    - id: default
+      url: file:///etc/config/identity.schema.json
+
+log:
+  level: debug
+  format: text
+  leak_sensitive_values: true
+
+session:
+  cookie:
+    domain: ".o10r.io"
+    same_site: Lax
+
+secrets:
+  cookie:
+    - changemeverytimeyoubuild56757564764
+  default:
+    - notasecret76574764u754uytuyutut
+
+hashers:
+  argon2:
+    parallelism: 1
+    memory: 128MB
+    iterations: 2
+    salt_length: 16
+    key_length: 16
+
+courier:
+  smtp:
+    connection_uri: smtp://test:test@mailhog:1025/
+
+oauth2_provider:
+  url: http://hydra:4445
