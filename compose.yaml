@@ -4,7 +4,7 @@ services:
     command: serve -c /etc/config/kratos.yml --dev
     restart: unless-stopped
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
     depends_on:
       - mysqld-kratos
     environment:
