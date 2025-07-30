@@ -25,7 +25,7 @@ services:
     image: oryd/kratos:v1.1.0
     command: migrate sql -e --yes
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
     restart: unless-stopped
     environment:
       - DSN=mysql://root:secret@tcp(mysqld-kratos:3306)/kratos?max_conns=20&max_idle_conns=4
@@ -43,7 +43,7 @@ services:
     ports:
       - "3306"
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
   kratos-ui:
     image: oryd/kratos-selfservice-ui-node:v1.3.1
     container_name: kratos-ui
@@ -64,7 +64,7 @@ services:
     depends_on:
       - kratos
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
     restart: unless-stopped
   mailhog:
     image: mailhog/mailhog
@@ -73,7 +73,7 @@ services:
       - "1025:1025"
       - "8025:8025"
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
   hydra:
     image: oryd/hydra:v2.2.0
     labels:
@@ -96,7 +96,7 @@ services:
     depends_on:
       - hydra-migrate
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
   hydra-migrate:
     image: oryd/hydra:v2.2.0
     depends_on:
@@ -108,7 +108,7 @@ services:
     volumes:
       - ./hydra:/etc/config/hydra
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
   consent:
     environment:
       - HYDRA_ADMIN_URL=http://hydra:4445
@@ -122,7 +122,7 @@ services:
       - 3000
     restart: unless-stopped
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
   mysqld-hydra:
     image: mysql:8.0
     ports:
@@ -138,7 +138,7 @@ services:
       retries: 55
     restart: unless-stopped
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
   hydra-client-register:
     image: curlimages/curl:latest
     entrypoint: [ "/bin/sh", "-c" ]
@@ -152,9 +152,9 @@ services:
     depends_on:
       - hydra
     networks:
-      - dev-ecommpay-pp-network
+      - dev-o10r-network
 
 networks:
-  dev-ecommpay-pp-network:
-    name: dev-ecommpay-pp-network
+  dev-o10r-network:
+    name: dev-o10r-network
     external: true
