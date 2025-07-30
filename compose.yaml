@@ -8,7 +8,7 @@ services:
     depends_on:
       - mysqld-kratos
     environment:
-      - DSN=mysql://root:secret@tcp(mysqld-kratos:3306)/kratos?max_conns=20&max_idle_conns=4
+      - DSN=mysql://root:secret@tcp(mysqld-kratos:3306)/kratos
     volumes:
       - ./kratos/kratos.yml:/etc/config/kratos.yml:ro
       - ./kratos/identity.schema.json:/etc/config/identity.schema.json:ro
@@ -28,7 +28,7 @@ services:
       - dev-o10r-network
     restart: unless-stopped
     environment:
-      - DSN=mysql://root:secret@tcp(mysqld-kratos:3306)/kratos?max_conns=20&max_idle_conns=4
+      - DSN=mysql://root:secret@tcp(mysqld-kratos:3306)/kratos
     depends_on:
       - kratos
       - mysqld-kratos
@@ -87,7 +87,7 @@ services:
     volumes:
       - ./hydra:/etc/config/hydra
     environment:
-      - DSN=mysql://root:secret@tcp(mysqld-hydra:3306)/hydra?max_conns=20&max_idle_conns=4
+      - DSN=mysql://root:secret@tcp(mysqld-hydra:3306)/hydra
       - SERVE_PUBLIC_PORT=4444
       - SERVE_ADMIN_PORT=4445
       - SERVE_PUBLIC_BASE_URL=https://hydra.o10r.io
@@ -103,7 +103,7 @@ services:
       mysqld-hydra:
         condition: service_healthy
     environment:
-      - DSN=mysql://root:secret@tcp(mysqld-hydra:3306)/hydra?max_conns=20&max_idle_conns=4
+      - DSN=mysql://root:secret@tcp(mysqld-hydra:3306)/hydra
     command: migrate -c /etc/config/hydra/hydra.yml sql up -e --yes
     volumes:
       - ./hydra:/etc/config/hydra

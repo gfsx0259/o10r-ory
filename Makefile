@@ -8,9 +8,3 @@ export GID=$(shell id -g)
 
 up:
 	docker compose up -d --remove-orphans
-
-ps:
-	docker compose ps
-
-logs:
-	docker compose logs -f
