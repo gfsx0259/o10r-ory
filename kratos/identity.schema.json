@@ -35,6 +35,11 @@
               "type": "string"
             }
           }
+        },
+        "avatar_url": {
+          "type": "string",
+          "format": "uri",
+          "title": "Avatar URL"
         }
       },
       "required": [

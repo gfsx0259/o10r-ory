@@ -43,6 +43,7 @@ selfservice:
             mapper_url: file:///etc/config/oidc_mapper.jsonnet
             scope:
               - email
+              - profile
 
   flows:
     login:
