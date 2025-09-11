@@ -5,6 +5,9 @@ services:
     restart: unless-stopped
     networks:
       - dev-o10r-network
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     depends_on:
       - mysqld-kratos
     environment:
