@@ -20,7 +20,7 @@ services:
       - ./kratos/webhook.jsonnet:/etc/config/webhook.jsonnet:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.kratos_api.rule=Host(`auth.o10r.io`) && (PathPrefix(`/self-service`) || PathPrefix(`/sessions/whoami`) || PathPrefix(`/health`) || PathPrefix(`/identities`))
+      - traefik.http.routers.kratos_api.rule=Host(`auth.o10r.io`) && (PathPrefix(`/self-service`) || PathPrefix(`/sessions/whoami`))
       - traefik.http.routers.kratos_api.tls=true
       - traefik.http.routers.kratos_api.entrypoints=https
       - traefik.http.services.kratos_api.loadbalancer.server.port=4433
@@ -47,29 +47,24 @@ services:
       - "33060:3306"
     networks:
       - dev-o10r-network
-#  kratos-ui:
-#    image: oryd/kratos-selfservice-ui-node:v1.3.1
-#    container_name: kratos-ui
-#    labels:
-#      - traefik.enable=true
-#      - traefik.http.routers.kratos_ui.rule=Host(`auth.o10r.io`) && !(PathPrefix(`/self-service`) || PathPrefix(`/sessions/whoami`) || PathPrefix(`/health`) || PathPrefix(`/identities`))
-#      - traefik.http.routers.kratos_ui.tls=true
-#      - traefik.http.routers.kratos_ui.entrypoints=https
-#      - traefik.http.services.kratos_ui.loadbalancer.server.port=3000
-#    expose:
-#      - 3000
-#    environment:
-#      - KRATOS_PUBLIC_URL=http://kratos:4433/
-#      - KRATOS_BROWSER_URL=https://auth.o10r.io
-#      - PORT=3000
-#      - COOKIE_SECRET=sdfgdfgdfgdgfd
-#      - CSRF_COOKIE_NAME=csrf-cookie
-#      - CSRF_COOKIE_SECRET=tretertertertgergerre
-#    depends_on:
-#      - kratos
-#    networks:
-#      - dev-o10r-network
-#    restart: unless-stopped
+  kratos-ui:
+    image: konstantinpopov/kratos-ui:1.0.0
+    container_name: kratos-ui
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.kratos_ui.rule=Host(`auth.o10r.io`) && !(PathPrefix(`/self-service`) || PathPrefix(`/sessions/whoami`))
+      - traefik.http.routers.kratos_ui.tls=true
+      - traefik.http.routers.kratos_ui.entrypoints=https
+      - traefik.http.services.kratos_ui.loadbalancer.server.port=3000
+    expose:
+      - 3000
+    environment:
+      - NEXT_PUBLIC_ORY_SDK_URL=https://auth.o10r.io
+    depends_on:
+      - kratos
+    networks:
+      - dev-o10r-network
+    restart: unless-stopped
   mailhog:
     image: mailhog/mailhog
     restart: unless-stopped
