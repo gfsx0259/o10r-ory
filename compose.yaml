@@ -1,7 +1,7 @@
 services:
   kratos:
     image: oryd/kratos:v1.1.0
-    command: serve -c /etc/config/kratos.yml --dev
+    command: serve -c /etc/config/kratos.yml --dev --watch-courier
     restart: unless-stopped
     networks:
       - dev-o10r-network
@@ -12,6 +12,7 @@ services:
       - mysqld-kratos
     environment:
       - DSN=mysql://root:secret@tcp(mysqld-kratos:3306)/kratos
+      - LOG_LEAK_SENSITIVE_VALUES=true
     volumes:
       - ./kratos/kratos.yml:/etc/config/kratos.yml:ro
       - ./kratos/identity.schema.json:/etc/config/identity.schema.json:ro
@@ -19,11 +20,10 @@ services:
       - ./kratos/webhook.jsonnet:/etc/config/webhook.jsonnet:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.kratos_api.rule=Host(`ory.o10r.io`)
+      - traefik.http.routers.kratos_api.rule=Host(`auth.o10r.io`) && (PathPrefix(`/self-service`) || PathPrefix(`/sessions/whoami`) || PathPrefix(`/health`) || PathPrefix(`/identities`))
       - traefik.http.routers.kratos_api.tls=true
-      - traefik.http.routers.kratos_api.entrypoints=kratos
-    expose:
-      - "4433"
+      - traefik.http.routers.kratos_api.entrypoints=https
+      - traefik.http.services.kratos_api.loadbalancer.server.port=4433
   kratos-migrate:
     image: oryd/kratos:v1.1.0
     command: migrate sql -e --yes
@@ -44,118 +44,122 @@ services:
       - MYSQL_DATABASE=kratos
       - MYSQL_ROOT_PASSWORD=secret
     ports:
-      - "3306"
+      - "33060:3306"
     networks:
       - dev-o10r-network
-  kratos-ui:
-    image: oryd/kratos-selfservice-ui-node:v1.3.1
-    container_name: kratos-ui
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.kratos_ui.rule=Host(`ory.o10r.io`)
-      - traefik.http.routers.kratos_ui.tls=true
-      - traefik.http.routers.kratos_ui.entrypoints=https
-    expose:
-      - "3000"
-    environment:
-      - KRATOS_PUBLIC_URL=http://kratos:4433/
-      - KRATOS_BROWSER_URL=https://ory.o10r.io:4433
-      - PORT=3000
-      - COOKIE_SECRET=sdfgdfgdfgdgfd
-      - CSRF_COOKIE_NAME=csrf-cookie
-      - CSRF_COOKIE_SECRET=tretertertertgergerre
-    depends_on:
-      - kratos
-    networks:
-      - dev-o10r-network
-    restart: unless-stopped
+#  kratos-ui:
+#    image: oryd/kratos-selfservice-ui-node:v1.3.1
+#    container_name: kratos-ui
+#    labels:
+#      - traefik.enable=true
+#      - traefik.http.routers.kratos_ui.rule=Host(`auth.o10r.io`) && !(PathPrefix(`/self-service`) || PathPrefix(`/sessions/whoami`) || PathPrefix(`/health`) || PathPrefix(`/identities`))
+#      - traefik.http.routers.kratos_ui.tls=true
+#      - traefik.http.routers.kratos_ui.entrypoints=https
+#      - traefik.http.services.kratos_ui.loadbalancer.server.port=3000
+#    expose:
+#      - 3000
+#    environment:
+#      - KRATOS_PUBLIC_URL=http://kratos:4433/
+#      - KRATOS_BROWSER_URL=https://auth.o10r.io
+#      - PORT=3000
+#      - COOKIE_SECRET=sdfgdfgdfgdgfd
+#      - CSRF_COOKIE_NAME=csrf-cookie
+#      - CSRF_COOKIE_SECRET=tretertertertgergerre
+#    depends_on:
+#      - kratos
+#    networks:
+#      - dev-o10r-network
+#    restart: unless-stopped
   mailhog:
     image: mailhog/mailhog
     restart: unless-stopped
-    ports:
-      - "1025"
-      - "8025"
-    networks:
-      - dev-o10r-network
-  hydra:
-    image: oryd/hydra:v2.2.0
     labels:
       - traefik.enable=true
-      - traefik.http.routers.hydra_api.rule=Host(`hydra.o10r.io`)
-      - traefik.http.routers.hydra_api.tls=true
-      - traefik.http.routers.hydra_api.entrypoints=https
-      - traefik.http.routers.hydra_api.service=hydra_api_service
-      - traefik.http.services.hydra_api_service.loadbalancer.server.port=4444
-    command: serve all --config /etc/config/hydra/hydra.yml --dev
-    volumes:
-      - ./hydra:/etc/config/hydra
-    environment:
-      - DSN=mysql://root:secret@tcp(mysqld-hydra:3306)/hydra
-      - SERVE_PUBLIC_PORT=4444
-      - SERVE_ADMIN_PORT=4445
-      - SERVE_PUBLIC_BASE_URL=https://hydra.o10r.io
-      - LOG_LEAK_SENSITIVE_VALUES=true
-    restart: unless-stopped
-    depends_on:
-      - hydra-migrate
+      - traefik.http.routers.mail.rule=Host(`mail.o10r.io`)
+      - traefik.http.routers.mail.tls=true
+      - traefik.http.routers.mail.entrypoints=https
+      - traefik.http.services.mail.loadbalancer.server.port=8025
     networks:
       - dev-o10r-network
-  hydra-migrate:
-    image: oryd/hydra:v2.2.0
-    depends_on:
-      mysqld-hydra:
-        condition: service_healthy
-    environment:
-      - DSN=mysql://root:secret@tcp(mysqld-hydra:3306)/hydra
-    command: migrate -c /etc/config/hydra/hydra.yml sql up -e --yes
-    volumes:
-      - ./hydra:/etc/config/hydra
-    networks:
-      - dev-o10r-network
-  consent:
-    environment:
-      - HYDRA_ADMIN_URL=http://hydra:4445
-    image: oryd/hydra-login-consent-node:v2.2.0
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.hydra_consent.rule=Host(`hydra-consent.o10r.io`)
-      - traefik.http.routers.hydra_consent.tls=true
-      - traefik.http.routers.hydra_consent.entrypoints=https
-    expose:
-      - 3000
-    restart: unless-stopped
-    networks:
-      - dev-o10r-network
-  mysqld-hydra:
-    image: mysql:8.0
-    ports:
-      - "3306"
-    environment:
-      - MYSQL_ROOT_PASSWORD=secret
-      - MYSQL_DATABASE=hydra
-    healthcheck:
-      test: mysqladmin ping -h 127.0.0.1
-      start_period: 5s
-      interval: 5s
-      timeout: 5s
-      retries: 55
-    restart: unless-stopped
-    networks:
-      - dev-o10r-network
-  hydra-client-register:
-    image: curlimages/curl:latest
-    entrypoint: [ "/bin/sh", "-c" ]
-    command: >
-      'sleep 30 && 
-      curl -X POST http://hydra:4445/admin/clients
-      -H "Content-Type: application/json"
-      -d @/config/client.json || echo "Client may already exist"'
-    volumes:
-      - ./hydra/client.json:/config/client.json:ro
-    depends_on:
-      - hydra
-    networks:
-      - dev-o10r-network
+#  hydra:
+#    image: oryd/hydra:v2.2.0
+#    labels:
+#      - traefik.enable=true
+#      - traefik.http.routers.hydra_api.rule=Host(`hydra.o10r.io`)
+#      - traefik.http.routers.hydra_api.tls=true
+#      - traefik.http.routers.hydra_api.entrypoints=https
+#      - traefik.http.routers.hydra_api.service=hydra_api_service
+#      - traefik.http.services.hydra_api_service.loadbalancer.server.port=4444
+#    command: serve all --config /etc/config/hydra/hydra.yml --dev
+#    volumes:
+#      - ./hydra:/etc/config/hydra
+#    environment:
+#      - DSN=mysql://root:secret@tcp(mysqld-hydra:3306)/hydra
+#      - SERVE_PUBLIC_PORT=4444
+#      - SERVE_ADMIN_PORT=4445
+#      - SERVE_PUBLIC_BASE_URL=https://hydra.o10r.io
+#      - LOG_LEAK_SENSITIVE_VALUES=true
+#    restart: unless-stopped
+#    depends_on:
+#      - hydra-migrate
+#    networks:
+#      - dev-o10r-network
+#  hydra-migrate:
+#    image: oryd/hydra:v2.2.0
+#    depends_on:
+#      mysqld-hydra:
+#        condition: service_healthy
+#    environment:
+#      - DSN=mysql://root:secret@tcp(mysqld-hydra:3306)/hydra
+#    command: migrate -c /etc/config/hydra/hydra.yml sql up -e --yes
+#    volumes:
+#      - ./hydra:/etc/config/hydra
+#    networks:
+#      - dev-o10r-network
+#  consent:
+#    environment:
+#      - HYDRA_ADMIN_URL=http://hydra:4445
+#    image: oryd/hydra-login-consent-node:v2.2.0
+#    labels:
+#      - traefik.enable=true
+#      - traefik.http.routers.hydra_consent.rule=Host(`hydra-consent.o10r.io`)
+#      - traefik.http.routers.hydra_consent.tls=true
+#      - traefik.http.routers.hydra_consent.entrypoints=https
+#    expose:
+#      - 3000
+#    restart: unless-stopped
+#    networks:
+#      - dev-o10r-network
+#  mysqld-hydra:
+#    image: mysql:8.0
+#    ports:
+#      - "3306"
+#    environment:
+#      - MYSQL_ROOT_PASSWORD=secret
+#      - MYSQL_DATABASE=hydra
+#    healthcheck:
+#      test: mysqladmin ping -h 127.0.0.1
+#      start_period: 5s
+#      interval: 5s
+#      timeout: 5s
+#      retries: 55
+#    restart: unless-stopped
+#    networks:
+#      - dev-o10r-network
+#  hydra-client-register:
+#    image: curlimages/curl:latest
+#    entrypoint: [ "/bin/sh", "-c" ]
+#    command: >
+#      'sleep 30 &&
+#      curl -X POST http://hydra:4445/admin/clients
+#      -H "Content-Type: application/json"
+#      -d @/config/client.json || echo "Client may already exist"'
+#    volumes:
+#      - ./hydra/client.json:/config/client.json:ro
+#    depends_on:
+#      - hydra
+#    networks:
+#      - dev-o10r-network
 
 networks:
   dev-o10r-network:
