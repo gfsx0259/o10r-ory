@@ -68,6 +68,8 @@ selfservice:
                 method: POST
                 body: file:///etc/config/webhook.jsonnet
             - hook: session
+    error:
+      ui_url: https://auth.o10r.io/auth/error
     settings:
       ui_url: https://auth.o10r.io/auth/settings
     recovery:
