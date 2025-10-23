@@ -18,6 +18,9 @@
                 "identifier": true
               }
             },
+            "verification": {
+              "via": "email"
+            },
             "recovery": {
               "via": "email"
             }
@@ -35,11 +38,6 @@
               "type": "string"
             }
           }
-        },
-        "avatar_url": {
-          "type": "string",
-          "format": "uri",
-          "title": "Avatar URL"
         }
       },
       "required": [

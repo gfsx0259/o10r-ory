@@ -1,11 +1,10 @@
 serve:
   public:
-    base_url: https://ory.o10r.io:4433
+    base_url: https://auth.o10r.io
     cors:
       enabled: true
       allowed_origins:
-        - https://ory.o10r.io         # разрешаем UI‑домен
-        - https://dashboard.o10r.io        # разрешаем app‑домен
+        - https://auth.o10r.io         # разрешаем UI‑домен
         - https://welcome.o10r.io        # разрешаем app‑домен
       allowed_methods:
         - GET
@@ -47,10 +46,10 @@ selfservice:
 
   flows:
     login:
-      ui_url: https://ory.o10r.io/login
+      ui_url: https://auth.o10r.io/auth/login
       lifespan: 10m
     registration:
-      ui_url: https://ory.o10r.io/registration
+      ui_url: https://auth.o10r.io/auth/registration
       lifespan: 10m
       after:
         password:
@@ -60,25 +59,31 @@ selfservice:
                 url: http://project/project
                 method: POST
                 body: file:///etc/config/webhook.jsonnet
+            - hook: session
         oidc:
           hooks:
-            - hook: session
             - hook: web_hook
               config:
                 url: http://project/project
                 method: POST
                 body: file:///etc/config/webhook.jsonnet
+            - hook: session
+    error:
+      ui_url: https://auth.o10r.io/auth/error
     settings:
-      ui_url: https://ory.o10r.io/settings
+      ui_url: https://auth.o10r.io/auth/settings
     recovery:
       enabled: false
-      ui_url: https://ory.o10r.io/recovery
+      ui_url: https://auth.o10r.io/recovery
     verification:
-      enabled: false # TODO YOU SHOULD IMPLEMENT IT
-      ui_url: https://ory.o10r.io/verify
+      enabled: true
+      ui_url: https://auth.o10r.io/auth/verification
+      use: code
+      after:
+        default_browser_return_url: https://welcome.o10r.io
     logout:
       after:
-        default_browser_return_url: https://ory.o10r.io/login
+        default_browser_return_url: https://auth.o10r.io/auth/login
 
 identity:
   default_schema_id: default
@@ -93,8 +98,7 @@ log:
 
 session:
   cookie:
-    domain: ".o10r.io"
-    same_site: Lax
+    domain: o10r.io
 
 secrets:
   cookie:
@@ -112,7 +116,7 @@ hashers:
 
 courier:
   smtp:
-    connection_uri: smtp://test:test@mailhog:1025/
+    connection_uri: smtp://mailhog:1025/?skip_ssl_verify=true&disable_starttls=true
 
 oauth2_provider:
   url: http://hydra:4445
